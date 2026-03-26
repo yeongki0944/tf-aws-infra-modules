@@ -8,6 +8,15 @@ variable "environment" {
   type        = string
 }
 
+variable "customer" {
+  description = "고객사 식별 코드 (예: mzc)"
+  type        = string
+}
+
+variable "app_name" {
+  description = "서비스/앱 이름 (예: eks)"
+  type        = string
+}
 variable "cluster_name" {
   description = "EKS cluster name"
   type        = string
