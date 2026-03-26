@@ -1,4 +1,6 @@
+# =============================================================
 # MSP Naming Context
+# =============================================================
 variable "customer" {
   type        = string
   description = "고객사 코드"
@@ -23,7 +25,9 @@ variable "app_name" {
   description = "서비스 명칭 (예: eks)"
 }
 
+# =============================================================
 # Network
+# =============================================================
 variable "vpc_cidr" {
   type = string
 }
@@ -38,33 +42,27 @@ variable "single_nat_gateway" {
   default = true
 }
 
-# DNS & Bastion
+# =============================================================
+# DNS
+# =============================================================
 variable "domain_name" {
   type = string
 }
 
-variable "bastion_allow_ip" {
-  type = string
+# =============================================================
+# Compute & Security (General Pattern)
+# =============================================================
+# 기존 bastion_allow_ip와 bastion_instance_type를 대체합니다.
+variable "compute_instances" {
+  description = "생성할 EC2 인스턴스 목록"
+  type = map(object({
+    instance_type = string
+  }))
+  default = {}
 }
 
-variable "bastion_instance_type" {
-  type    = string
-  default = "t3.micro"
-}
-
-# Storage & ECR
-variable "s3_force_destroy" {
-  type    = bool
-  default = true
-}
-
-variable "ecr_repositories" {
-  type    = list(string)
-  default = []
-}
-
-# Security Groups
 variable "security_groups" {
+  description = "생성할 보안 그룹 및 규칙 정의"
   type = map(object({
     description = string
     ingress_rules = list(object({
@@ -76,4 +74,17 @@ variable "security_groups" {
     }))
   }))
   default = {}
+}
+
+# =============================================================
+# Storage & ECR
+# =============================================================
+variable "s3_force_destroy" {
+  type    = bool
+  default = true
+}
+
+variable "ecr_repositories" {
+  type    = list(string)
+  default = []
 }
