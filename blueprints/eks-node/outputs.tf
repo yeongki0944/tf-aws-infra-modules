@@ -1,19 +1,19 @@
 output "node_role_arn" {
-  description = "Node IAM Role ARN"
+  description = "생성된 노드 IAM Role의 ARN"
   value       = aws_iam_role.node.arn
 }
 
 output "node_role_name" {
-  description = "Node IAM Role Name"
+  description = "생성된 노드 IAM Role의 이름"
   value       = aws_iam_role.node.name
 }
 
-output "infra_ng_name" {
-  description = "Infra Node Group name"
-  value       = aws_eks_node_group.infra.node_group_name
-}
-
-output "infra_ng_status" {
-  description = "Infra Node Group status"
-  value       = aws_eks_node_group.infra.status
+output "node_groups" {
+  description = "생성된 노드 그룹들의 상태 정보"
+  value = {
+    for k, v in aws_eks_node_group.this : k => {
+      arn    = v.arn
+      status = v.status
+    }
+  }
 }
