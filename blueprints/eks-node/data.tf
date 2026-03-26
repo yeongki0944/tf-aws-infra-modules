@@ -18,7 +18,7 @@ module "naming_vpc" {
   environment   = var.environment
   app_name      = var.app_name
   resource_type = "virtual_private_cloud"
-  name          = "network"
+  name          = "eks"
 }
 
 # 2. 실제 리소스 조회
