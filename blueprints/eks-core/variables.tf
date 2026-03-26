@@ -31,3 +31,9 @@ variable "cluster_access_cidrs" {
   description = "API 서버 접근 허용 CIDR"
   default     = ["0.0.0.0/0"]
 }
+
+variable "cluster_admin_arns" {
+  type        = list(string)
+  description = "EKS 클러스터 관리자 권한을 부여할 IAM User 또는 Role ARN 목록"
+  default     = []
+}
