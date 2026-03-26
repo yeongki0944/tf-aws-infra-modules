@@ -53,7 +53,7 @@ resource "aws_eks_access_policy_association" "admin" {
   
   # 수정됨: 모듈에서 생성된 클러스터 이름을 참조
   cluster_name  = module.eks.cluster_name
-  policy_arn    = "arn:aws:iam::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
   principal_arn = each.value
 
   access_scope {
