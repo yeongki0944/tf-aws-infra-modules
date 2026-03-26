@@ -6,7 +6,7 @@ module "naming_vpc" {
   environment   = var.environment
   app_name      = var.app_name
   resource_type = "virtual_private_cloud"
-  name          = "main"
+  name          = "eks"
 }
 
 module "vpc" {
