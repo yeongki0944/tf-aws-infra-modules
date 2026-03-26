@@ -15,15 +15,10 @@ output "custom_irsas_arns" {
   value       = { for k, v in module.custom_irsa : k => v.iam_role_arn }
 }
 
-# S3 (passthrough from datasource)
-output "loki_chunks_bucket" {
-  description = "Loki chunks S3 bucket"
-  value       = local.loki_chunks_bucket
-}
-
-output "loki_ruler_bucket" {
-  description = "Loki ruler S3 bucket"
-  value       = local.loki_ruler_bucket
+# S3
+output "s3_buckets" {
+  description = "조회된 S3 버킷 상세 정보"
+  value       = { for k, v in data.aws_s3_bucket.this : k => v.id }
 }
 
 # 참조용
