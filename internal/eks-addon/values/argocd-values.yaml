@@ -1,0 +1,33 @@
+# =============================================================
+# ArgoCD Helm Values — 초기 설치용 (최소 설정)
+# =============================================================
+
+server:
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+
+  # 리소스
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Redis HA 비활성화 (dev)
+redis-ha:
+  enabled: false
+
+# Notifications 비활성화 (필요시 활성화)
+notifications:
+  enabled: false
+
+# ApplicationSet Controller
+applicationSet:
+  enabled: true
+
+# Configs
+configs:
+  params:
+    server.insecure: true   # LB 뒤에서 TLS 종료 시
