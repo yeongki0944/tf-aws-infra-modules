@@ -13,6 +13,16 @@ module "naming_vpc" {
   name          = "eks"
 }
 
+module "naming_cluster" {
+  source        = "../../modules/naming"
+  customer      = var.customer
+  project       = var.project
+  environment   = var.environment
+  app_name      = var.app_name
+  resource_type = "eks_cluster" # 네이밍 모듈에 정의된 타입
+  name          = "cluster"
+}
+
 # Node IAM Role 네이밍 재현
 module "naming_node_role" {
   source        = "../../modules/naming"
@@ -32,7 +42,7 @@ data "aws_caller_identity" "current" {}
 
 # EKS Cluster (배포 레이어에서 전달받은 이름 사용)
 data "aws_eks_cluster" "this" {
-  name = var.cluster_name
+  name = module.naming_cluster.result
 }
 
 # VPC (네이밍 모듈의 결과값으로 필터링)
