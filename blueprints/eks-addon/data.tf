@@ -22,21 +22,16 @@ data "aws_iam_role" "node" {
   name = "${var.cluster_name}-node-role"
 }
 
-# Loki S3 Buckets
-data "aws_s3_bucket" "loki_chunks" {
-  bucket = "loki-${var.project}-chunks"
-}
-
-data "aws_s3_bucket" "loki_ruler" {
-  bucket = "loki-${var.project}-ruler"
-}
-
 # Route53 Zone
 data "aws_route53_zone" "this" {
   name         = var.domain_name
   private_zone = false
 }
 
+data "aws_s3_bucket" "this" {
+  for_each = var.s3_bucket_names
+  bucket   = each.value
+}
 locals {
   account_id = data.aws_caller_identity.current.account_id
 
@@ -50,10 +45,6 @@ locals {
 
   # Node
   node_role_arn = data.aws_iam_role.node.arn
-
-  # S3
-  loki_chunks_bucket = data.aws_s3_bucket.loki_chunks.id
-  loki_ruler_bucket  = data.aws_s3_bucket.loki_ruler.id
 
   # DNS
   zone_id     = data.aws_route53_zone.this.zone_id

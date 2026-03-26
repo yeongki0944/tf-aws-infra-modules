@@ -9,16 +9,10 @@ output "karpenter_queue_name" {
   value       = module.eks_blueprints_addons.karpenter.sqs.queue_name
 }
 
-# Loki IRSA
-output "loki_irsa_arn" {
-  description = "Loki IRSA Role ARN"
-  value       = module.loki_irsa.iam_role_arn
-}
-
-# OpenCost IRSA
-output "opencost_irsa_arn" {
-  description = "OpenCost IRSA Role ARN"
-  value       = module.opencost_irsa.iam_role_arn
+# outputs.tf
+output "custom_irsas_arns" {
+  description = "생성된 모든 Custom IRSA Role ARN 목록 (Map)"
+  value       = { for k, v in module.custom_irsa : k => v.iam_role_arn }
 }
 
 # S3 (passthrough from datasource)

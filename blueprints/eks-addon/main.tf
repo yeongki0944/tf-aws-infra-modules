@@ -1,9 +1,60 @@
 # =============================================================
-# EKS Blueprints Addons
+# 1. Custom IRSA (IAM Roles for Service Accounts) 동적 생성
+# =============================================================
+
+module "custom_irsa" {
+  # ✅ 공식 레지스트리로 변경 완료
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.39.0" # 최신 5.x 버전대 사용
+  
+  for_each = var.custom_irsas
+
+  role_name = "${local.cluster_name}-${each.key}"
+
+  oidc_providers = {
+    main = {
+      provider_arn               = local.oidc_provider_arn
+      namespace_service_accounts = ["${each.value.namespace}:${each.value.service_account}"]
+    }
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_iam_role_policy" "custom_irsa_inline" {
+  for_each = { for k, v in var.custom_irsas : k => v if v.inline_policy_json != null }
+
+  name   = "${local.cluster_name}-${each.key}-policy"
+  role   = module.custom_irsa[each.key].iam_role_name
+  policy = each.value.inline_policy_json
+}
+
+locals {
+  irsa_managed_policies = flatten([
+    for irsa_key, irsa_val in var.custom_irsas : [
+      for policy_arn in try(irsa_val.managed_policy_arns, []) : {
+        irsa_key   = irsa_key
+        policy_arn = policy_arn
+      }
+    ]
+  ])
+}
+
+resource "aws_iam_role_policy_attachment" "custom_irsa_managed" {
+  for_each = { for item in local.irsa_managed_policies : "${item.irsa_key}-${item.policy_arn}" => item }
+
+  role       = module.custom_irsa[each.value.irsa_key].iam_role_name
+  policy_arn = each.value.policy_arn
+}
+
+# =============================================================
+# 2. EKS Blueprints Addons
 # =============================================================
 
 module "eks_blueprints_addons" {
-  source = "${var.vendor_module_path}/terraform-aws-eks-blueprints-addons-v1.19.0"
+  # ✅ AWS 공식 EKS Blueprints Addons 레지스트리로 변경 완료
+  source  = "aws-ia/eks-blueprints-addons/aws"
+  version = "~> 1.19.0" # 기존에 사용하시던 1.19.0 버전 유지
 
   cluster_name      = local.cluster_name
   cluster_endpoint  = local.cluster_endpoint
@@ -15,7 +66,13 @@ module "eks_blueprints_addons" {
     coredns                         = { most_recent = true }
     kube-proxy                      = { most_recent = true }
     vpc-cni                         = { most_recent = true }
-    aws-ebs-csi-driver              = { most_recent = true, service_account_role_arn = module.ebs_csi_irsa.iam_role_arn }
+    
+    aws-ebs-csi-driver = { 
+      most_recent              = true
+      # 외부에서 "ebs_csi"로 주입한 IRSA Role ARN을 자동 매핑
+      service_account_role_arn = try(module.custom_irsa["ebs_csi"].iam_role_arn, null)
+    }
+    
     amazon-cloudwatch-observability = { most_recent = true }
     external-dns                    = { most_recent = true }
     metrics-server                  = { most_recent = true }
@@ -56,7 +113,7 @@ module "eks_blueprints_addons" {
 }
 
 # =============================================================
-# Karpenter 노드 보안 및 권한
+# 3. Karpenter 노드 보안 및 권한
 # =============================================================
 
 resource "aws_eks_access_entry" "karpenter_node" {
@@ -72,109 +129,4 @@ resource "aws_iam_role_policy_attachment" "karpenter_node_ebs" {
   role       = "${local.cluster_name}-karpenter-node"
 
   depends_on = [module.eks_blueprints_addons]
-}
-
-# =============================================================
-# IRSA — EBS CSI Driver
-# =============================================================
-
-module "ebs_csi_irsa" {
-  source = "${var.vendor_module_path}/terraform-aws-iam-v5.59.0/modules/iam-role-for-service-accounts-eks"
-
-  role_name             = "${local.cluster_name}-ebs-csi"
-  attach_ebs_csi_policy = true
-
-  oidc_providers = {
-    main = {
-      provider_arn               = local.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
-    }
-  }
-
-  tags = local.common_tags
-}
-
-# =============================================================
-# IRSA — Loki (S3 접근)
-# =============================================================
-
-module "loki_irsa" {
-  source = "${var.vendor_module_path}/terraform-aws-iam-v5.59.0/modules/iam-role-for-service-accounts-eks"
-
-  role_name = "${local.cluster_name}-loki"
-
-  oidc_providers = {
-    main = {
-      provider_arn               = local.oidc_provider_arn
-      namespace_service_accounts = ["loki:loki"]
-    }
-  }
-
-  tags = local.common_tags
-}
-
-resource "aws_iam_role_policy" "loki_s3" {
-  name = "${local.cluster_name}-loki-s3"
-  role = module.loki_irsa.iam_role_name
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:PutObject",
-          "s3:GetObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          "arn:aws:s3:::${local.loki_chunks_bucket}",
-          "arn:aws:s3:::${local.loki_chunks_bucket}/*",
-          "arn:aws:s3:::${local.loki_ruler_bucket}",
-          "arn:aws:s3:::${local.loki_ruler_bucket}/*"
-        ]
-      }
-    ]
-  })
-}
-
-# =============================================================
-# IRSA — OpenCost (Pricing API)
-# =============================================================
-
-module "opencost_irsa" {
-  source = "${var.vendor_module_path}/terraform-aws-iam-v5.59.0/modules/iam-role-for-service-accounts-eks"
-
-  role_name = "${local.cluster_name}-opencost"
-
-  oidc_providers = {
-    main = {
-      provider_arn               = local.oidc_provider_arn
-      namespace_service_accounts = ["monitoring:opencost"]
-    }
-  }
-
-  tags = local.common_tags
-}
-
-resource "aws_iam_role_policy" "opencost" {
-  name = "${local.cluster_name}-opencost"
-  role = module.opencost_irsa.iam_role_name
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "pricing:GetProducts",
-          "pricing:DescribeServices",
-          "ce:GetCostAndUsage",
-          "ce:GetCostForecast"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
 }

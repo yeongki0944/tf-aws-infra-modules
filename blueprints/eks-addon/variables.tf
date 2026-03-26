@@ -18,11 +18,6 @@ variable "domain_name" {
   type        = string
 }
 
-variable "vendor_module_path" {
-  description = "vendor 모듈 기본 경로"
-  type        = string
-}
-
 # Karpenter
 variable "karpenter_version" {
   description = "Karpenter Helm chart version"
@@ -33,4 +28,29 @@ variable "karpenter_version" {
 variable "argocd_version" {
   description = "ArgoCD Helm chart version"
   type        = string
+}
+
+# IRSA (IAM Roles for Service Accounts) 동적 생성 맵
+variable "custom_irsas" {
+  description = "생성할 Custom IRSA 목록 (Loki, OpenCost 등)"
+  type = map(object({
+    namespace              = string
+    service_account        = string
+    # 직접 인라인 정책을 붙일 경우
+    inline_policy_json     = optional(string)
+    # AWS Managed Policy ARN을 붙일 경우
+    managed_policy_arns    = optional(list(string), [])
+  }))
+  default = {}
+}
+
+# Helm Chart 버전 및 값 설정
+variable "helm_charts" {
+  description = "Helm Chart 관련 동적 설정 (Karpenter, ArgoCD 등)"
+  type = map(object({
+    enabled       = bool
+    chart_version = string
+    values_files  = optional(list(string), [])
+  }))
+  default = {}
 }
