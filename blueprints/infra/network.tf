@@ -1,19 +1,13 @@
-# VPC 네이밍 호출
-module "naming_vpc" {
-  source = "../../modules/naming"
-  customer      = var.customer
-  project       = var.project
-  environment   = var.environment
-  app_name      = var.app_name
-  resource_type = "virtual_private_cloud"
-  name          = "eks"
-}
+# =============================================================
+# VPC
+# =============================================================
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.16.0"
 
-  name = module.naming_vpc.result
+  # ★ 조회 키: cluster_name 기반 (다른 레이어에서 이 이름으로 찾음)
+  name = "${var.cluster_name}-vpc"
   cidr = var.vpc_cidr
 
   azs             = local.azs
@@ -23,12 +17,15 @@ module "vpc" {
   enable_nat_gateway = true
   single_nat_gateway = var.single_nat_gateway
 
-  tags = module.naming_vpc.tags
+  # ★ MSP 태그는 naming 모듈에서 가져옴
+  tags = local.common_tags
 
-  # EKS 및 로드밸런서 연동을 위한 필수 태그
-  public_subnet_tags = { "kubernetes.io/role/elb" = 1 }
+  # EKS 연동 태그
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = 1
-    "karpenter.sh/discovery"          = "${module.naming_vpc.prefix}-cluster"
+    "karpenter.sh/discovery"          = var.cluster_name
   }
 }

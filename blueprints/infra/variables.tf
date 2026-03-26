@@ -26,6 +26,14 @@ variable "app_name" {
 }
 
 # =============================================================
+# Cluster Context (레이어 간 조회 키)
+# =============================================================
+variable "cluster_name" {
+  type        = string
+  description = "EKS 클러스터 이름 — 모든 리소스 Name 태그의 기준이 되는 조회 키"
+}
+
+# =============================================================
 # Network
 # =============================================================
 variable "vpc_cidr" {
@@ -52,7 +60,6 @@ variable "domain_name" {
 # =============================================================
 # Compute & Security (General Pattern)
 # =============================================================
-# 기존 bastion_allow_ip와 bastion_instance_type를 대체합니다.
 variable "compute_instances" {
   description = "생성할 EC2 인스턴스 목록"
   type = map(object({
