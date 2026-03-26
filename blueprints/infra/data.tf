@@ -21,10 +21,17 @@ data "aws_availability_zones" "available" {
 data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
-  filter { name = "name"; values = ["al2023-ami-*-x86_64"] }
-  filter { name = "virtualization-type"; values = ["hvm"] }
-}
 
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*-x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
 # Global Naming Module 호출
 module "naming_global" {
   source = "../../modules/naming"
