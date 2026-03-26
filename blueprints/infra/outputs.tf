@@ -1,80 +1,30 @@
-# =============================================================
 # VPC
-# =============================================================
+output "vpc_id"          { value = module.vpc.vpc_id }
+output "vpc_cidr"        { value = module.vpc.vpc_cidr_block }
+output "private_subnets" { value = module.vpc.private_subnets }
 
-output "vpc_id" {
-  description = "VPC ID"
-  value       = module.vpc.vpc_id
+# Storage
+output "s3_bucket_ids" {
+  description = "Created S3 bucket IDs"
+  value       = { for k, v in aws_s3_bucket.this : k => v.id }
 }
-
-output "vpc_cidr" {
-  description = "VPC CIDR block"
-  value       = module.vpc.vpc_cidr_block
-}
-
-output "public_subnet_ids" {
-  description = "Public subnet IDs"
-  value       = module.vpc.public_subnets
-}
-
-output "private_subnet_ids" {
-  description = "Private subnet IDs"
-  value       = module.vpc.private_subnets
-}
-
-output "nat_gateway_ids" {
-  description = "NAT Gateway IDs"
-  value       = module.vpc.natgw_ids
-}
-
-# =============================================================
-# S3 (Loki)
-# =============================================================
-
-output "loki_chunks_bucket" {
-  description = "Loki chunks S3 bucket name"
-  value       = module.s3_loki_chunks.s3_bucket_id
-}
-
-output "loki_ruler_bucket" {
-  description = "Loki ruler S3 bucket name"
-  value       = module.s3_loki_ruler.s3_bucket_id
-}
-
-# =============================================================
-# ECR
-# =============================================================
 
 output "ecr_repository_urls" {
   description = "ECR repository URLs"
-  value       = { for k, v in module.ecr : k => v.repository_url }
+  value       = { for k, v in aws_ecr_repository.this : k => v.repository_url }
 }
 
-# =============================================================
-# Bastion
-# =============================================================
-
+# Bastion (참조 이름 수정: aws_instance.this["bastion"])
 output "bastion_public_ip" {
-  description = "Bastion EC2 public IP"
-  value       = aws_instance.bastion.public_ip
+  value = aws_instance.this["bastion"].public_ip
 }
 
 output "bastion_private_key" {
-  description = "Bastion SSH private key"
-  value       = module.bastion_key.private_key_pem
-  sensitive   = true
+  value     = module.compute_key["bastion"].private_key_pem
+  sensitive = true
 }
 
-# =============================================================
-# DNS (조회 결과 전달)
-# =============================================================
-
-output "zone_id" {
-  description = "Route53 Zone ID"
-  value       = local.zone_id
-}
-
-output "domain_name" {
-  description = "Route53 Domain Name"
-  value       = local.domain_name
-}
+# DNS & Context
+output "zone_id"     { value = local.zone_id }
+output "domain_name" { value = local.domain_name }
+output "common_tags" { value = local.common_tags }
