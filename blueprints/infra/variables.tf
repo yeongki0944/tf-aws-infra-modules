@@ -81,3 +81,22 @@ variable "ecr_repositories" {
   type        = list(string)
   default     = []
 }
+
+
+# =============================================================
+# Security Group
+# =============================================================
+variable "security_groups" {
+  description = "생성할 보안 그룹들의 상세 설정 맵"
+  type = map(object({
+    description = string
+    ingress_rules = list(object({
+      from_port   = number
+      to_port     = number
+      protocol    = string
+      description = string
+      cidr_blocks = string
+    }))
+  }))
+  default = {}
+}

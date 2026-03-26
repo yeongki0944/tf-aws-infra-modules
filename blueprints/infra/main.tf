@@ -4,7 +4,7 @@
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.16.0" # vendor 폴더에 있던 버전과 동일하게 고정
+  version = "5.16.0"
 
   name = "${var.cluster_name}-vpc"
   cidr = var.vpc_cidr
@@ -54,36 +54,29 @@ module "bastion_key" {
   tags = local.common_tags
 }
 
-module "bastion_sg" {
+# 범용 보안 그룹 생성 로직
+module "generic_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.3.0"
-  name        = "${var.cluster_name}-bastion-sg"
-  description = "Bastion EC2 security group"
+
+  for_each = var.security_groups
+
+  name        = "${var.cluster_name}-${each.key}"
+  description = each.value.description
   vpc_id      = module.vpc.vpc_id
 
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      description = "SSH access"
-      cidr_blocks = var.bastion_allow_ip
-    }
-  ]
-
+  ingress_with_cidr_blocks = each.value.ingress_rules
   egress_with_cidr_blocks = [
     {
       from_port   = 0
       to_port     = 0
       protocol    = "-1"
       cidr_blocks = "0.0.0.0/0"
-      description = "All outbound"
     }
   ]
 
   tags = local.common_tags
 }
-
 resource "aws_instance" "bastion" {
   ami                         = data.aws_ami.amazon_linux_2023.id
   instance_type               = var.bastion_instance_type
@@ -148,7 +141,7 @@ module "s3_loki_ruler" {
 module "ecr" {
   source  = "terraform-aws-modules/ecr/aws"
   version = "2.3.1"
-  
+
   for_each = toset(var.ecr_repositories)
 
   repository_name                 = each.key
