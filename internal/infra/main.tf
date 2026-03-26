@@ -45,7 +45,8 @@ module "vpc" {
 # =============================================================
 
 module "bastion_key" {
-  source = "${var.vendor_module_path}/terraform-aws-key-pair-v2.0.3"
+  source  = "terraform-aws-modules/key-pair/aws"
+  version = "2.0.3"
 
   key_name           = "${var.cluster_name}-bastion-key"
   create_private_key = true
@@ -54,8 +55,8 @@ module "bastion_key" {
 }
 
 module "bastion_sg" {
-  source = "${var.vendor_module_path}/terraform-aws-security-group-v5.3.0"
-
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.3.0"
   name        = "${var.cluster_name}-bastion-sg"
   description = "Bastion EC2 security group"
   vpc_id      = module.vpc.vpc_id
@@ -101,7 +102,8 @@ resource "aws_instance" "bastion" {
 # =============================================================
 
 module "s3_loki_chunks" {
-  source = "${var.vendor_module_path}/terraform-aws-s3-bucket-v4.6.0"
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "4.6.0"
 
   bucket        = "loki-${var.project}-chunks"
   force_destroy = var.s3_force_destroy
@@ -125,7 +127,8 @@ module "s3_loki_chunks" {
 }
 
 module "s3_loki_ruler" {
-  source = "${var.vendor_module_path}/terraform-aws-s3-bucket-v4.6.0"
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "4.6.0"
 
   bucket        = "loki-${var.project}-ruler"
   force_destroy = var.s3_force_destroy
@@ -143,7 +146,9 @@ module "s3_loki_ruler" {
 # =============================================================
 
 module "ecr" {
-  source   = "${var.vendor_module_path}/terraform-aws-ecr-v2.3.1"
+  source  = "terraform-aws-modules/ecr/aws"
+  version = "2.3.1"
+  
   for_each = toset(var.ecr_repositories)
 
   repository_name                 = each.key

@@ -17,11 +17,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "vendor_module_path" {
-  description = "vendor 모듈 기본 경로"
-  type        = string
-}
-
 # =============================================================
 # VPC
 # =============================================================
