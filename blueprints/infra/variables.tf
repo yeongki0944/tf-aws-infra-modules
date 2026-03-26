@@ -1,36 +1,34 @@
 # =============================================================
-# MSP Naming Context
-# =============================================================
-variable "customer" {
-  type        = string
-  description = "고객사 코드"
-}
-
-variable "project" {
-  type        = string
-  description = "프로젝트 명칭"
-}
-
-variable "environment" {
-  type        = string
-  description = "환경 (dev/stg/prd/shared)"
-  validation {
-    condition     = contains(["dev", "stg", "prd", "shared"], var.environment)
-    error_message = "Environment must be one of: dev, stg, prd, shared."
-  }
-}
-
-variable "app_name" {
-  type        = string
-  description = "서비스 명칭 (예: eks)"
-}
-
-# =============================================================
-# Cluster Context (레이어 간 조회 키)
+# 조회 키 & 태그 (deployment에서 주입)
 # =============================================================
 variable "cluster_name" {
   type        = string
-  description = "EKS 클러스터 이름 — 모든 리소스 Name 태그의 기준이 되는 조회 키"
+  description = "레이어 간 조회 키"
+}
+
+variable "vpc_name" {
+  type        = string
+  description = "VPC Name 태그"
+}
+
+variable "sg_names" {
+  type        = map(string)
+  description = "Security Group Name 맵 (key=용도, value=전체 이름)"
+}
+
+variable "ec2_names" {
+  type        = map(string)
+  description = "EC2 Instance Name 맵"
+}
+
+variable "s3_names" {
+  type        = map(string)
+  description = "S3 Bucket Name 맵"
+}
+
+variable "common_tags" {
+  type        = map(string)
+  description = "MSP 표준 태그"
 }
 
 # =============================================================
@@ -61,7 +59,6 @@ variable "domain_name" {
 # Compute & Security (General Pattern)
 # =============================================================
 variable "compute_instances" {
-  description = "생성할 EC2 인스턴스 목록"
   type = map(object({
     instance_type = string
   }))
@@ -69,7 +66,6 @@ variable "compute_instances" {
 }
 
 variable "security_groups" {
-  description = "생성할 보안 그룹 및 규칙 정의"
   type = map(object({
     description = string
     ingress_rules = list(object({
@@ -84,7 +80,7 @@ variable "security_groups" {
 }
 
 # =============================================================
-# Storage & ECR
+# Storage
 # =============================================================
 variable "s3_force_destroy" {
   type    = bool

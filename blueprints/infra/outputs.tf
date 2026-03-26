@@ -6,13 +6,11 @@ output "public_subnets"  { value = module.vpc.public_subnets }
 
 # Storage
 output "s3_bucket_ids" {
-  description = "Created S3 bucket IDs"
-  value       = { for k, v in aws_s3_bucket.this : k => v.id }
+  value = { for k, v in aws_s3_bucket.this : k => v.id }
 }
 
 output "ecr_repository_urls" {
-  description = "ECR repository URLs"
-  value       = { for k, v in aws_ecr_repository.this : k => v.repository_url }
+  value = { for k, v in aws_ecr_repository.this : k => v.repository_url }
 }
 
 # Bastion
@@ -25,8 +23,7 @@ output "bastion_private_key" {
   sensitive = true
 }
 
-# DNS & Context
+# DNS
 output "zone_id"      { value = local.zone_id }
 output "domain_name"  { value = data.aws_route53_zone.this.name }
 output "cluster_name" { value = var.cluster_name }
-output "common_tags"  { value = local.common_tags }

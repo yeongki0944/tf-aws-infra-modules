@@ -1,22 +1,13 @@
-# =============================================================
-# Key Pair
-# =============================================================
-
 module "compute_key" {
   source  = "terraform-aws-modules/key-pair/aws"
   version = "2.0.3"
 
   for_each = var.compute_instances
 
-  key_name           = "${var.cluster_name}-${each.key}-key"
+  key_name           = "${var.ec2_names[each.key]}-key"
   create_private_key = true
-
-  tags = local.common_tags
+  tags               = var.common_tags
 }
-
-# =============================================================
-# EC2 Instances (General Pattern)
-# =============================================================
 
 resource "aws_instance" "this" {
   for_each = var.compute_instances
@@ -28,9 +19,7 @@ resource "aws_instance" "this" {
   associate_public_ip_address = true
   key_name                    = module.compute_key[each.key].key_pair_name
 
-  # ★ Name 태그: cluster_name 기반 (조회 키)
-  # ★ MSP 태그: naming 모듈에서 가져옴
-  tags = merge(local.common_tags, {
-    Name = "${var.cluster_name}-${each.key}"
+  tags = merge(var.common_tags, {
+    Name = var.ec2_names[each.key]
   })
 }
