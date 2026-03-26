@@ -54,3 +54,9 @@ variable "helm_charts" {
   }))
   default = {}
 }
+
+variable "s3_bucket_names" {
+  description = "Addon에서 사용할 기존 S3 버킷 이름 목록 (Key-Value 형식)"
+  type        = map(string)
+  default     = {}
+}
